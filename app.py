@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import requests as http_requests
 import os
+import time
 
 app = Flask(__name__)
 
@@ -90,7 +91,6 @@ def chat():
         err = "कुछ तो बोलो ना… 😊" if language == "hindi" else "Say something… 😊"
         return jsonify({"reply": err}), 400
 
-    # Build system prompt based on language, character, and name
     prompt_template = PROMPTS.get(language, PROMPTS["hindi"]).get(character, PROMPTS["hindi"]["girl"])
     system_prompt = prompt_template.format(name=name)
 
@@ -101,33 +101,50 @@ def chat():
         "X-Title": "Janvi AI Companion",
     }
 
+    # Try each model, with one retry on rate limit
     for model in MODELS:
-        try:
-            if "gemma" in model:
-                messages = [{"role": "user", "content": system_prompt + "\n\nUser: " + user_message}]
-            else:
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
-                ]
+        for attempt in range(2):
+            try:
+                print(f"[{model}] attempt {attempt + 1}")
 
-            api_response = http_requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json={"model": model, "messages": messages},
-                timeout=30,
-            )
+                if "gemma" in model:
+                    messages = [{"role": "user", "content": system_prompt + "\n\nUser: " + user_message}]
+                else:
+                    messages = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ]
 
-            resp_data = api_response.json()
+                api_response = http_requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json={"model": model, "messages": messages},
+                    timeout=30,
+                )
 
-            if api_response.status_code == 200 and "choices" in resp_data:
-                reply = resp_data["choices"][0]["message"]["content"]
-                return jsonify({"reply": reply})
-            else:
-                continue
+                resp_data = api_response.json()
+                print(f"  status={api_response.status_code}")
 
-        except Exception:
-            continue
+                if api_response.status_code == 200 and "choices" in resp_data:
+                    reply = resp_data["choices"][0]["message"]["content"]
+                    print(f"  OK: {reply[:50]}")
+                    return jsonify({"reply": reply})
+
+                if api_response.status_code == 429:
+                    wait = 3 if attempt == 0 else 0
+                    print(f"  rate limited, waiting {wait}s...")
+                    if wait:
+                        time.sleep(wait)
+                        continue
+                    break
+
+                err_msg = resp_data.get("error", {}).get("message", "unknown")
+                print(f"  error: {err_msg[:80]}")
+                break
+
+            except Exception as e:
+                print(f"  exception: {e}")
+                break
 
     err = "अरे, कुछ गड़बड़ हो गई। थोड़ी देर बाद फिर से कोशिश करो। 😅" if language == "hindi" else "Oops, something went wrong. Please try again later. 😅"
     return jsonify({"reply": err})
