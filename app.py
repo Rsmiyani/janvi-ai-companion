@@ -61,13 +61,15 @@ PROMPTS = {
 MODELS = [
     "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
+    "liquid/lfm-2.5-1.2b-instruct:free",
     "google/gemma-3-27b-it:free",
     "google/gemma-3-12b-it:free",
     "google/gemma-3-4b-it:free",
     "mistralai/mistral-small-3.1-24b-instruct:free",
     "qwen/qwen3-4b:free",
     "meta-llama/llama-3.2-3b-instruct:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "arcee-ai/trinity-large-preview:free",
 ]
 
 
@@ -101,12 +103,11 @@ def chat():
         "X-Title": "Janvi AI Companion",
     }
 
-    # Try each model, with one retry on rate limit
+    rate_limit_hit = False
+
     for model in MODELS:
         for attempt in range(2):
             try:
-                print(f"[{model}] attempt {attempt + 1}")
-
                 if "gemma" in model:
                     messages = [{"role": "user", "content": system_prompt + "\n\nUser: " + user_message}]
                 else:
@@ -123,30 +124,29 @@ def chat():
                 )
 
                 resp_data = api_response.json()
-                print(f"  status={api_response.status_code}")
 
                 if api_response.status_code == 200 and "choices" in resp_data:
                     reply = resp_data["choices"][0]["message"]["content"]
-                    print(f"  OK: {reply[:50]}")
                     return jsonify({"reply": reply})
 
                 if api_response.status_code == 429:
+                    rate_limit_hit = True
                     wait = 3 if attempt == 0 else 0
-                    print(f"  rate limited, waiting {wait}s...")
                     if wait:
                         time.sleep(wait)
                         continue
                     break
 
-                err_msg = resp_data.get("error", {}).get("message", "unknown")
-                print(f"  error: {err_msg[:80]}")
                 break
 
-            except Exception as e:
-                print(f"  exception: {e}")
+            except Exception:
                 break
 
-    err = "अरे, कुछ गड़बड़ हो गई। थोड़ी देर बाद फिर से कोशिश करो। 😅" if language == "hindi" else "Oops, something went wrong. Please try again later. 😅"
+    if rate_limit_hit:
+        err = "अरे, API की लिमिट खत्म हो गई है। कृपया कल फिर से बात करें या अपना खुद का Paid API Key इस्तेमाल करें। 😅" if language == "hindi" else "Oops, the free API limit has been reached for today. Please try again tomorrow! 😅"
+    else:
+        err = "अरे, कुछ गड़बड़ हो गई। थोड़ी देर बाद फिर से कोशिश करो। 😅" if language == "hindi" else "Oops, something went wrong. Please try again later. 😅"
+        
     return jsonify({"reply": err})
 
 
