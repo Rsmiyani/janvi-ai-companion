@@ -1,125 +1,200 @@
-// ===== Janvi AI Companion - Chat Logic =====
+// ===== Settings Management =====
+const DEFAULTS = {
+    name: 'Janvi',
+    character: 'girl',
+    language: 'hindi',
+};
 
-const chatbox = document.getElementById("chatbox");
-const messageInput = document.getElementById("message");
-const sendBtn = document.getElementById("sendBtn");
-
-/**
- * Get current time formatted as HH:MM
- */
-function getTime() {
-    const now = new Date();
-    return now.toLocaleTimeString("hi-IN", { hour: "2-digit", minute: "2-digit" });
+function loadSettings() {
+    return {
+        name: localStorage.getItem('charName') || DEFAULTS.name,
+        character: localStorage.getItem('charType') || DEFAULTS.character,
+        language: localStorage.getItem('charLang') || DEFAULTS.language,
+    };
 }
 
-/**
- * Append a chat message bubble to the chatbox.
- * @param {"user"|"bot"} sender
- * @param {string} text
- */
-function addMessage(sender, text) {
-    // Remove the welcome message on first interaction
-    const welcome = chatbox.querySelector(".welcome-message");
-    if (welcome) welcome.remove();
+function saveSettings(key, value) {
+    localStorage.setItem(key, value);
+}
 
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("message", sender);
+// ===== UI Updates =====
+function applySettings() {
+    const s = loadSettings();
+    const avatarSrc = `/static/images/${s.character}.png`;
 
-    wrapper.innerHTML = `
+    // Update avatars
+    document.getElementById('headerAvatar').src = avatarSrc;
+    document.getElementById('welcomeAvatar').src = avatarSrc;
+
+    // Update header name
+    document.getElementById('headerName').textContent = s.name;
+
+    // Update subtitle
+    const subtitles = {
+        hindi: { girl: `तुम्हारी AI girlfriend 💜`, boy: `तुम्हारा AI boyfriend 💜` },
+        english: { girl: `Your AI girlfriend 💜`, boy: `Your AI boyfriend 💜` },
+    };
+    document.getElementById('headerSubtitle').textContent = subtitles[s.language][s.character];
+
+    // Update welcome message
+    const welcomes = {
+        hindi: {
+            title: 'नमस्ते! 🙏',
+            text: `मैं ${s.name} हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ हूँ! 😊`,
+        },
+        english: {
+            title: 'Hey there! 👋',
+            text: `I'm ${s.name}, your AI companion. Tell me, how was your day? You can talk about anything, I'm here for you! 😊`,
+        },
+    };
+    document.getElementById('welcomeTitle').textContent = welcomes[s.language].title;
+    document.getElementById('welcomeText').textContent = welcomes[s.language].text;
+
+    // Update input placeholder
+    const placeholders = { hindi: 'अपनी बात यहाँ लिखो…', english: 'Type your message here…' };
+    document.getElementById('message').placeholder = placeholders[s.language];
+
+    // Update name input
+    document.getElementById('nameInput').value = s.name;
+
+    // Update toggle buttons
+    document.getElementById('girlBtn').classList.toggle('active', s.character === 'girl');
+    document.getElementById('boyBtn').classList.toggle('active', s.character === 'boy');
+    document.getElementById('hindiBtn').classList.toggle('active', s.language === 'hindi');
+    document.getElementById('englishBtn').classList.toggle('active', s.language === 'english');
+}
+
+function updateName(name) {
+    if (name.trim()) {
+        saveSettings('charName', name.trim());
+        applySettings();
+    }
+}
+
+function setCharacter(type) {
+    saveSettings('charType', type);
+    // Set default name if user hasn't customized it
+    const currentName = localStorage.getItem('charName');
+    if (!currentName || currentName === 'Janvi' || currentName === 'Arjun') {
+        saveSettings('charName', type === 'girl' ? 'Janvi' : 'Arjun');
+    }
+    applySettings();
+}
+
+function setLanguage(lang) {
+    saveSettings('charLang', lang);
+    applySettings();
+}
+
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('open');
+}
+
+// ===== Chat Functions =====
+const chatbox = document.getElementById('chatbox');
+const input = document.getElementById('message');
+
+function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = `message ${sender}`;
+    msg.innerHTML = `
         <div class="bubble">
-            ${escapeHTML(text)}
+            ${text}
             <div class="msg-time">${getTime()}</div>
-        </div>
-    `;
-
-    chatbox.appendChild(wrapper);
+        </div>`;
+    chatbox.appendChild(msg);
     chatbox.scrollTop = chatbox.scrollHeight;
 }
 
-/**
- * Show typing indicator
- */
 function showTyping() {
-    const el = document.createElement("div");
-    el.classList.add("message", "bot");
-    el.id = "typing";
-
-    el.innerHTML = `
-        <div class="bubble typing-indicator">
-            <span></span><span></span><span></span>
-        </div>
-    `;
-
+    const el = document.createElement('div');
+    el.id = 'typing';
+    el.className = 'typing-indicator';
+    el.innerHTML = '<span></span><span></span><span></span>';
     chatbox.appendChild(el);
     chatbox.scrollTop = chatbox.scrollHeight;
 }
 
-/**
- * Remove typing indicator
- */
-function removeTyping() {
-    const el = document.getElementById("typing");
+function hideTyping() {
+    const el = document.getElementById('typing');
     if (el) el.remove();
 }
 
-/**
- * Escape HTML to prevent injection
- */
-function escapeHTML(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-/**
- * Send user message and get Janvi's reply
- */
 async function sendMessage() {
-    const text = messageInput.value.trim();
+    const text = input.value.trim();
     if (!text) return;
 
-    // Add user message
-    addMessage("user", text);
-    messageInput.value = "";
-    messageInput.focus();
+    // Hide welcome message
+    const welcome = document.getElementById('welcomeMsg');
+    if (welcome) welcome.style.display = 'none';
 
-    // Disable input while waiting
-    messageInput.disabled = true;
-    sendBtn.disabled = true;
-
+    addMessage(text, 'user');
+    input.value = '';
     showTyping();
 
-    try {
-        const response = await fetch("/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text }),
-        });
+    const s = loadSettings();
 
-        const data = await response.json();
-        removeTyping();
-        addMessage("bot", data.reply);
-    } catch (err) {
-        removeTyping();
-        addMessage("bot", "अरे, कुछ गड़बड़ हो गई। बाद में कोशिश करो। 😅");
-    } finally {
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        messageInput.focus();
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: text,
+                language: s.language,
+                character: s.character,
+                name: s.name,
+            }),
+        });
+        const data = await res.json();
+        hideTyping();
+        addMessage(data.reply, 'bot');
+    } catch {
+        hideTyping();
+        const errMsgs = {
+            hindi: 'अरे, कुछ गड़बड़ हो गई। थोड़ी देर बाद फिर से कोशिश करो। 😅',
+            english: 'Oops, something went wrong. Please try again later. 😅',
+        };
+        addMessage(errMsgs[s.language], 'bot');
     }
 }
 
-/**
- * Clear all messages and show welcome again
- */
 function clearChat() {
+    chatbox.innerHTML = '';
+    // Re-add welcome message
+    const s = loadSettings();
+    const welcomes = {
+        hindi: {
+            title: 'नमस्ते! 🙏',
+            text: `मैं ${s.name} हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ हूँ! 😊`,
+        },
+        english: {
+            title: 'Hey there! 👋',
+            text: `I'm ${s.name}, your AI companion. Tell me, how was your day? You can talk about anything, I'm here for you! 😊`,
+        },
+    };
     chatbox.innerHTML = `
-        <div class="welcome-message">
+        <div class="welcome-message" id="welcomeMsg">
             <div class="welcome-avatar">
-                <div class="welcome-avatar-inner">J</div>
+                <img class="welcome-avatar-img" id="welcomeAvatar" src="/static/images/${s.character}.png" alt="Avatar">
             </div>
-            <h2>नमस्ते! 🙏</h2>
-            <p>मैं जानवी हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ हूँ! 😊</p>
-        </div>
-    `;
+            <h2 id="welcomeTitle">${welcomes[s.language].title}</h2>
+            <p id="welcomeText">${welcomes[s.language].text}</p>
+        </div>`;
 }
+
+// Close settings when clicking outside
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('settingsPanel');
+    const btn = document.getElementById('settingsBtn');
+    if (panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)) {
+        panel.classList.remove('open');
+    }
+});
+
+// Initialize on load
+applySettings();

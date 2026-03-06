@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Janvi AI Companion</title>
     <meta name="description"
-        content="Chat with Janvi - your friendly Hindi-speaking AI companion who listens, supports, and encourages positive thinking.">
+        content="Chat with Janvi - your friendly AI companion who listens, supports, and encourages positive thinking.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -29,15 +29,24 @@
         <header class="chat-header">
             <div class="header-left">
                 <div class="avatar">
-                    <div class="avatar-inner">J</div>
+                    <img class="avatar-img" id="headerAvatar" src="/static/images/girl.png" alt="Avatar">
                     <span class="status-dot"></span>
                 </div>
                 <div class="header-info">
-                    <h1>Janvi</h1>
-                    <p class="subtitle">तुम्हारी AI girlfriend 💜</p>
+                    <h1 id="headerName">Janvi</h1>
+                    <p class="subtitle" id="headerSubtitle">तुम्हारी AI girlfriend 💜</p>
                 </div>
             </div>
             <div class="header-right">
+                <button class="icon-btn" id="settingsBtn" title="Settings" onclick="toggleSettings()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z">
+                        </path>
+                    </svg>
+                </button>
                 <button class="icon-btn" id="clearBtn" title="Clear Chat" onclick="clearChat()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -48,14 +57,38 @@
             </div>
         </header>
 
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-row">
+                <label>Character Name</label>
+                <input type="text" id="nameInput" class="settings-input" placeholder="Enter name..." maxlength="20"
+                    oninput="updateName(this.value)">
+            </div>
+            <div class="settings-row">
+                <label>Character</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="girlBtn" onclick="setCharacter('girl')">👩 Girl</button>
+                    <button class="toggle-btn" id="boyBtn" onclick="setCharacter('boy')">👦 Boy</button>
+                </div>
+            </div>
+            <div class="settings-row">
+                <label>Language</label>
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="hindiBtn" onclick="setLanguage('hindi')">हिंदी</button>
+                    <button class="toggle-btn" id="englishBtn" onclick="setLanguage('english')">English</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Chat Messages -->
         <div class="chat-messages" id="chatbox">
-            <div class="welcome-message">
+            <div class="welcome-message" id="welcomeMsg">
                 <div class="welcome-avatar">
-                    <div class="welcome-avatar-inner">J</div>
+                    <img class="welcome-avatar-img" id="welcomeAvatar" src="/static/images/girl.png" alt="Avatar">
                 </div>
-                <h2>नमस्ते! 🙏</h2>
-                <p>मैं जानवी हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ हूँ! 😊</p>
+                <h2 id="welcomeTitle">नमस्ते! 🙏</h2>
+                <p id="welcomeText">मैं जानवी हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ
+                    हूँ! 😊</p>
             </div>
         </div>
 
