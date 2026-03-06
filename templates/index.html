@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Janvi AI Companion</title>
+    <meta name="description"
+        content="Chat with Janvi - your friendly Hindi-speaking AI companion who listens, supports, and encourages positive thinking.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <!-- Background Decorations -->
+    <div class="bg-decoration">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-left">
+                <div class="avatar">
+                    <div class="avatar-inner">J</div>
+                    <span class="status-dot"></span>
+                </div>
+                <div class="header-info">
+                    <h1>Janvi</h1>
+                    <p class="subtitle">तुम्हारी AI girlfriend 💜</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" id="clearBtn" title="Clear Chat" onclick="clearChat()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatbox">
+            <div class="welcome-message">
+                <div class="welcome-avatar">
+                    <div class="welcome-avatar-inner">J</div>
+                </div>
+                <h2>नमस्ते! 🙏</h2>
+                <p>मैं जानवी हूँ, तुम्हारी AI दोस्त। बताओ, आज कैसा दिन रहा? कुछ भी बात करो, मैं यहाँ हूँ! 😊</p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <div class="input-container">
+                <input type="text" id="message" placeholder="अपनी बात यहाँ लिखो…" autocomplete="off"
+                    onkeydown="if(event.key==='Enter') sendMessage()">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
