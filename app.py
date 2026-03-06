@@ -4,7 +4,7 @@ import os
 
 app = Flask(__name__)
 
-API_KEY = os.environ.get("OPENROUTER_API_KEY", "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")
+API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 
 SYSTEM_PROMPT = (
     "You are Janvi, a 24 year old girl and the user's loving girlfriend. "
@@ -23,15 +23,13 @@ MODELS = [
     "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
     "nousresearch/hermes-3-llama-3.1-405b:free",
     "meta-llama/llama-3.3-70b-instruct:free",
+    "google/gemma-3-27b-it:free",
+    "google/gemma-3-12b-it:free",
     "google/gemma-3-4b-it:free",
+    "mistralai/mistral-small-3.1-24b-instruct:free",
+    "qwen/qwen3-4b:free",
+    "meta-llama/llama-3.2-3b-instruct:free",
 ]
-
-HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-    "HTTP-Referer": "http://localhost:5000",
-    "X-Title": "Janvi AI Companion",
-}
 
 
 @app.route("/")
@@ -43,8 +41,18 @@ def home():
 def chat():
     user_message = request.json.get("message", "")
 
+    if not API_KEY:
+        return jsonify({"reply": "API key नहीं मिली। कृपया OPENROUTER_API_KEY सेट करो। 🔑"})
+
     if not user_message.strip():
         return jsonify({"reply": "कुछ तो बोलो ना… 😊"}), 400
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": request.url_root,
+        "X-Title": "Janvi AI Companion",
+    }
 
     # Try each model until one works
     for model in MODELS:
@@ -64,7 +72,7 @@ def chat():
 
             api_response = http_requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
-                headers=HEADERS,
+                headers=headers,
                 json={"model": model, "messages": messages},
                 timeout=30,
             )
@@ -74,15 +82,15 @@ def chat():
 
             if api_response.status_code == 200 and "choices" in data:
                 reply = data["choices"][0]["message"]["content"]
-                print(f"  ✅ Success with {model}")
+                print(f"  Success with {model}")
                 return jsonify({"reply": reply})
             else:
                 error_msg = data.get("error", {}).get("message", "Unknown")
-                print(f"  ❌ Error: {error_msg[:100]}")
+                print(f"  Error: {error_msg[:100]}")
                 continue
 
         except Exception as e:
-            print(f"  ❌ Exception: {e}")
+            print(f"  Exception: {e}")
             continue
 
     # All models failed
